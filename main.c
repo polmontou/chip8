@@ -41,11 +41,13 @@ int main(void) {
     chip8.ram[0x402] = 0x00;  // RETURN
     chip8.ram[0x403] = 0xEE;
 
-    while (chip8.ram[chip8.pc] != 0x00) {
+    while (chip8.ram[chip8.pc] != 0x00 || chip8.ram[chip8.pc+1] != 0x00) {
         uint16_t currentPc = chip8.pc;
         chip8_cycle(&chip8);
-        printf("Register V[%d] = %02x\n", (chip8.ram[currentPc] & 0x0F), chip8.v[chip8.ram[currentPc] & 0x0F]);
-        printf("Next instruction : %03x\n", chip8.pc);
+        //printf("Register V[%d] = %02x\n", (chip8.ram[currentPc] & 0x0F), chip8.v[chip8.ram[currentPc] & 0x0F]);
+        //printf("Next instruction : %03x\n", chip8.pc);
+        printf("Register V[1] = %02x // V[2] = %02x\n", chip8.v[1], chip8.v[2]);
+        printf("Le PC pour la prochaine boucle sera  : %03x\n", chip8.pc);
     }
     return 0;
 }
