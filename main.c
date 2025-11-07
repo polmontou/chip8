@@ -31,3 +31,16 @@ void chip8_init(Chip8 *chip8) {
     chip8->sp = 0;
     memset(chip8->stack, 0, sizeof(chip8->stack));
 };
+
+int chip8_load_rom(Chip8 *chip8, const char *filename) {
+    FILE *file = fopen(filename, "rb");
+
+    if (!file) {
+        printf("No file loaded, please make you sure you pick an existing one.");
+        return -1;
+    }
+    fread(&chip8->ram[0x200], sizeof(uint8_t),3584, file);
+    fclose(file);
+    printf("Rom loaded successfully!");
+    return 0;
+}
