@@ -15,20 +15,32 @@ typedef struct {
 void chip8_init(Chip8 *chip8);
 uint16_t chip8_fetch(Chip8 *chip8);
 uint8_t chip8_decode(uint16_t instruct);
-void jumpTo1NNN(Chip8 *chip8, uint16_t NNN);
+void jumpToNNN(Chip8 *chip8, uint16_t NNN);
 void setVXtoNN(Chip8 *chip8, uint8_t X, uint8_t NN);
 void increaseVXofNN(Chip8 *chip8, uint8_t X, uint8_t NN);
 void chip8_cycle(Chip8 *chip8);
+void return00EE (Chip8 *chip8);
+void callNNN(Chip8 *chip8, uint16_t NNN);
 
 
 int main(void) {
     Chip8 chip8;
     chip8_init(&chip8);
 
-    chip8.ram[0x200] = 0x61;
+    // Programme principal à 0x200
+    chip8.ram[0x200] = 0x61;  // V1 = 5
     chip8.ram[0x201] = 0x05;
-    chip8.ram[0x202] = 0x6D;
-    chip8.ram[0x203] = 0xF5;
+    chip8.ram[0x202] = 0x24;  // CALL 0x400
+    chip8.ram[0x203] = 0x00;
+    chip8.ram[0x204] = 0x71;  // V1 += 10 (après le retour)
+    chip8.ram[0x205] = 0x0A;
+
+    // Fonction à 0x400
+    chip8.ram[0x400] = 0x62;  // V2 = 7
+    chip8.ram[0x401] = 0x07;
+    chip8.ram[0x402] = 0x00;  // RETURN
+    chip8.ram[0x403] = 0xEE;
+
     while (chip8.ram[chip8.pc] != 0x00) {
         uint16_t currentPc = chip8.pc;
         chip8_cycle(&chip8);
@@ -43,14 +55,31 @@ int main(void) {
 void chip8_cycle(Chip8 *chip8) {
     uint16_t instruct = chip8_fetch(chip8);
     uint16_t firstNibble = chip8_decode(instruct);
-    uint8_t X = 0, NN = 0;
+    uint8_t X = 0, Y = 0, NN = 0;
     uint16_t NNN = 0;
     short pcModified = 0;
 
     switch(firstNibble) {
+        case 0x0:
+            NN = (instruct & 0x00FF);
+            switch (NN) {
+                case 0xE0:
+
+                    break;
+                case 0xEE:
+                    return00EE(chip8);
+                    pcModified = 1;
+                    break;
+            }
+            break;
         case 0x1:
             NNN = (instruct & 0x0FFF);
-            jumpTo1NNN(chip8, NNN);
+            jumpToNNN(chip8, NNN);
+            pcModified = 1;
+            break;
+        case 0x2:
+            NNN = (instruct & 0x0FFF);
+            callNNN(chip8, NNN);
             pcModified = 1;
             break;
         case 0x3:
@@ -65,7 +94,17 @@ void chip8_cycle(Chip8 *chip8) {
         case 0x4:
             X = (instruct & 0x0F00) >> 8;
             NN = (instruct & 0x00FF);
+
             if (chip8->v[X] != NN) {
+                chip8->pc += 4;
+                pcModified = 1;
+            }
+            break;
+        case 0x5:
+            X = (instruct & 0x0F00) >> 8;
+            Y = (instruct & 0x00F0) >> 4;
+
+            if (chip8->v[X] == chip8->v[Y]) {
                 chip8->pc += 4;
                 pcModified = 1;
             }
@@ -86,10 +125,20 @@ void chip8_cycle(Chip8 *chip8) {
     }
 }
 
-void jumpTo1NNN(Chip8 *chip8, uint16_t NNN) {
-    chip8->pc = NNN;
+
+void return00EE (Chip8 *chip8) {
+    chip8->sp--;
+    chip8->pc = chip8->stack[chip8->sp];
 }
 
+void jumpToNNN(Chip8 *chip8, uint16_t NNN) {
+    chip8->pc = NNN;
+}
+void callNNN(Chip8 *chip8, uint16_t NNN) {
+    chip8->stack[chip8->sp] = chip8->pc+2;
+    chip8->sp++;
+    chip8->pc = NNN;
+}
 void setVXtoNN(Chip8 *chip8, uint8_t X, uint8_t NN) {
     chip8->v[X] = NN;
 }
