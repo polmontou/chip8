@@ -11,6 +11,13 @@ typedef struct {
     uint16_t stack[16];
 } Chip8;
 
+// int main() {
+//     int x = 1;
+//     int y = 2;
+//
+//     printf("Test 3: %d\n", x & y);   // & entre deux nombres
+//     printf("Test 4: %d\n", x && y);  // && entre deux nombres
+// }
 
 
 

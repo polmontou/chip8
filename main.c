@@ -10,54 +10,98 @@ typedef struct {
     uint16_t pc;
     uint8_t sp;
     uint16_t stack[16];
+    uint8_t display[32][64];
 } Chip8;
 
-void chip8_init(Chip8 *chip8);
-uint16_t chip8_fetch(Chip8 *chip8);
-uint8_t chip8_decode(uint16_t instruct);
+void chip8Init(Chip8 *chip8);
+uint16_t chip8Fetch(Chip8 *chip8);
+uint8_t chip8Decode(uint16_t instruct);
 void jumpToNNN(Chip8 *chip8, uint16_t NNN);
 void setVXtoNN(Chip8 *chip8, uint8_t X, uint8_t NN);
 void increaseVXofNN(Chip8 *chip8, uint8_t X, uint8_t NN);
-void chip8_cycle(Chip8 *chip8);
+void chip8Cycle(Chip8 *chip8);
 void return00EE (Chip8 *chip8);
 void callNNN(Chip8 *chip8, uint16_t NNN);
 
+const uint8_t CHIP8_FONTSET[80] = {
+    // 0
+    0xF0, 0x90, 0x90, 0x90, 0xF0,
+    // 1
+    0x60, 0xE0, 0x60, 0x60, 0xF0,
+    // 2
+    0xF0, 0x10, 0xF0, 0x80, 0xF0,
+    // 3
+    0xF0, 0x10, 0xF0, 0x10, 0xF0,
+    // 4
+    0x30, 0x50, 0x90, 0xF0, 0x10,
+    // 5
+    0xF0, 0x80, 0xF0, 0x10, 0xF0,
+    // 6
+    0xF0, 0x80, 0xF0, 0x90, 0xF0,
+    // 7
+    0xF0, 0x10, 0x20, 0x40, 0x80,
+    // 8
+    0x60, 0x90, 0x60, 0x90, 0x60,
+    // 9
+    0xF0, 0x90, 0xF0, 0x10, 0xF0,
+    // A
+    0x60, 0x90, 0xF0, 0x90, 0x90,
+    // B
+    0xE0, 0x90, 0xE0, 0x90, 0xE0,
+    // C
+    0x60, 0x90, 0x80, 0x90, 0x60,
+    // D
+    0xE0, 0x90, 0x90, 0x90, 0xE0,
+    // E
+    0xF0, 0x80, 0xE0, 0x80, 0xF0,
+    // F
+    0xF0, 0x80, 0xE0, 0x80, 0x80
+};
 
-int main(void) {
-    Chip8 chip8;
-    chip8_init(&chip8);
+// int main(void) {
+//     Chip8 chip8;
+//     chip8_init(&chip8);
+//
+//     // Programme principal à 0x200
+//     chip8.ram[0x200] = 0x61;  // V1 = 5
+//     chip8.ram[0x201] = 0x05;
+//     chip8.ram[0x202] = 0x24;  // CALL 0x400
+//     chip8.ram[0x203] = 0x00;
+//     chip8.ram[0x204] = 0x71;  // V1 += 10 (après le retour)
+//     chip8.ram[0x205] = 0x0A;
+//
+//     // Fonction à 0x400
+//     chip8.ram[0x400] = 0x62;  // V2 = 7
+//     chip8.ram[0x401] = 0x07;
+//     chip8.ram[0x402] = 0x00;  // RETURN
+//     chip8.ram[0x403] = 0xEE;
+//
+//     while (chip8.ram[chip8.pc] != 0x00 || chip8.ram[chip8.pc+1] != 0x00) {
+//         uint16_t currentPc = chip8.pc;
+//         chip8_cycle(&chip8);
+//         //printf("Register V[%d] = %02x\n", (chip8.ram[currentPc] & 0x0F), chip8.v[chip8.ram[currentPc] & 0x0F]);
+//         //printf("Next instruction : %03x\n", chip8.pc);
+//         printf("Register V[1] = %02x // V[2] = %02x\n", chip8.v[1], chip8.v[2]);
+//         printf("Le PC pour la prochaine boucle sera  : %03x\n", chip8.pc);
+//     }
+//     return 0;
+// }
+void chip8Init(Chip8 *chip8) {
+    memset(chip8->ram, 0, sizeof(chip8->ram));
+    memset(chip8->v, 0, sizeof(chip8->v));
+    chip8->i = 0;
+    chip8->pc = 0x200;
+    chip8->sp = 0;
+    memset(chip8->stack, 0, sizeof(chip8->stack));
+    memset(chip8->display, 0, sizeof(chip8->display));
+    memcpy(chip8->ram, CHIP8_FONTSET, sizeof(CHIP8_FONTSET));
+};
 
-    // Programme principal à 0x200
-    chip8.ram[0x200] = 0x61;  // V1 = 5
-    chip8.ram[0x201] = 0x05;
-    chip8.ram[0x202] = 0x24;  // CALL 0x400
-    chip8.ram[0x203] = 0x00;
-    chip8.ram[0x204] = 0x71;  // V1 += 10 (après le retour)
-    chip8.ram[0x205] = 0x0A;
 
-    // Fonction à 0x400
-    chip8.ram[0x400] = 0x62;  // V2 = 7
-    chip8.ram[0x401] = 0x07;
-    chip8.ram[0x402] = 0x00;  // RETURN
-    chip8.ram[0x403] = 0xEE;
-
-    while (chip8.ram[chip8.pc] != 0x00 || chip8.ram[chip8.pc+1] != 0x00) {
-        uint16_t currentPc = chip8.pc;
-        chip8_cycle(&chip8);
-        //printf("Register V[%d] = %02x\n", (chip8.ram[currentPc] & 0x0F), chip8.v[chip8.ram[currentPc] & 0x0F]);
-        //printf("Next instruction : %03x\n", chip8.pc);
-        printf("Register V[1] = %02x // V[2] = %02x\n", chip8.v[1], chip8.v[2]);
-        printf("Le PC pour la prochaine boucle sera  : %03x\n", chip8.pc);
-    }
-    return 0;
-}
-
-
-
-void chip8_cycle(Chip8 *chip8) {
-    uint16_t instruct = chip8_fetch(chip8);
-    uint16_t firstNibble = chip8_decode(instruct);
-    uint8_t X = 0, Y = 0, NN = 0;
+void chip8Cycle(Chip8 *chip8) {
+    uint16_t instruct = chip8Fetch(chip8);
+    uint16_t firstNibble = chip8Decode(instruct);
+    uint8_t X = 0, Y = 0, NN = 0, N = 0;
     uint16_t NNN = 0;
     short pcModified = 0;
 
@@ -66,7 +110,7 @@ void chip8_cycle(Chip8 *chip8) {
             NN = (instruct & 0x00FF);
             switch (NN) {
                 case 0xE0:
-
+                    memset(chip8->display, 0, sizeof(chip8->display));
                     break;
                 case 0xEE:
                     return00EE(chip8);
@@ -121,12 +165,38 @@ void chip8_cycle(Chip8 *chip8) {
             NN = (instruct & 0x00FF);
             increaseVXofNN(chip8, X, NN);
             break;
+        case 0xA:
+            NNN = (instruct & 0x0FFF);
+            chip8->i = NNN;
+        case 0xD:
+            X = (instruct & 0x0F00) >> 8;
+            Y = (instruct & 0x00F0) >> 4;
+            N = (instruct & 0x000F);
+
+
     }
     if (pcModified == 0) {
         chip8->pc += 2;
     }
 }
 
+void drawSprite(Chip8 *chip8, uint8_t X, uint8_t Y, uint8_t N) {
+    int currentLine, currentPix;
+
+    for (int line = 0; line < N; line++) {
+        currentLine = (Y + line) % 32;
+
+        for (int pix = 0; pix < 8; pix++) {
+            currentPix = (X + pix) % 64;
+            uint8_t currentMask = 0x80 >> pix;
+
+            if (chip8->display[currentLine][currentPix] == 1) {
+                chip8->v[0xF] = 1;
+            }
+            chip8->display[currentLine][currentPix] ^= (chip8->ram[chip8->i+line] & currentMask) >> (7-pix);
+        }
+    }
+}
 
 void return00EE (Chip8 *chip8) {
     chip8->sp--;
@@ -148,16 +218,8 @@ void setVXtoNN(Chip8 *chip8, uint8_t X, uint8_t NN) {
 void increaseVXofNN(Chip8 *chip8, uint8_t X, uint8_t NN) {
     chip8->v[X] += NN;
 }
-void chip8_init(Chip8 *chip8) {
-    memset(chip8->ram, 0, sizeof(chip8->ram));
-    memset(chip8->v, 0, sizeof(chip8->v));
-    chip8->i = 0;
-    chip8->pc = 0x200;
-    chip8->sp = 0;
-    memset(chip8->stack, 0, sizeof(chip8->stack));
-};
 
-int chip8_load_rom(Chip8 *chip8, const char *filename) {
+int chip8LoadRom(Chip8 *chip8, const char *filename) {
     FILE *file = fopen(filename, "rb");
 
     if (!file) {
@@ -170,12 +232,12 @@ int chip8_load_rom(Chip8 *chip8, const char *filename) {
     return 0;
 }
 
-uint16_t chip8_fetch(Chip8 *chip8) {
+uint16_t chip8Fetch(Chip8 *chip8) {
     uint16_t currentInstruct = (chip8->ram[chip8->pc]<<8) | (chip8->ram[chip8->pc+1]);
     return currentInstruct;
 }
 
-uint8_t chip8_decode(uint16_t instruct) {
+uint8_t chip8Decode(uint16_t instruct) {
     uint8_t firstNibble = (instruct & 0xF000) >> 12;
 
     return firstNibble;
