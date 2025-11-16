@@ -4,4 +4,5 @@ project(chip8 C)
 set(CMAKE_C_STANDARD 11)
 
 add_executable(chip8 main.c
-        Chip8.c)
+        Chip8.c
+        Chip8.h)
