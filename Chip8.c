@@ -233,6 +233,12 @@ void chip8Cycle(Chip8 *chip8) {
                 case 0x29:
                     chip8->i = chip8->v[X]*5;
                     break;
+                case 0x33:
+                    int value = chip8->v[X];
+                    chip8->ram[chip8->i] = value / 100;
+                    chip8->ram[chip8->i+1] = value / 10 % 10;
+                    chip8->ram[chip8->i+2] = value % 10;
+                    break;
                 case 0x55:
                     for (int i=0; i<=X; i++) {
                         chip8->ram[chip8->i+i] = chip8->v[i];
