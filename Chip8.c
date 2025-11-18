@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <time.h>
 
 typedef struct {
     uint8_t ram[4096];
@@ -66,6 +68,7 @@ void chip8Init(Chip8 *chip8) {
     memset(chip8->stack, 0, sizeof(chip8->stack));
     memset(chip8->display, 0, sizeof(chip8->display));
     memcpy(chip8->ram, CHIP8_FONTSET, sizeof(CHIP8_FONTSET));
+    srand(time(NULL));
 };
 
 
@@ -209,7 +212,8 @@ void chip8Cycle(Chip8 *chip8) {
             X = (instruct & 0x0F00) >> 8;
             NN = instruct & 0x00FF;
 
-            chip8->v[X] = ;
+            chip8->v[X] = rand() % 256 & NN ;
+            break;
         case 0xD:
             X = (instruct & 0x0F00) >> 8;
             Y = (instruct & 0x00F0) >> 4;
@@ -218,6 +222,28 @@ void chip8Cycle(Chip8 *chip8) {
             chip8->v[0xF] = 0;
             drawSprite(chip8, chip8->v[X], chip8->v[Y], N);
             break;
+        case 0xF:
+            X = (instruct & 0x0F00) >> 8;
+            NN = instruct & 0x00FF;
+
+            switch (NN) {
+                case 0x1E:
+                    chip8->i += chip8->v[X];
+                    break;
+                case 0x29:
+                    chip8->i = chip8->v[X]*5;
+                    break;
+                case 0x55:
+                    for (int i=0; i<=X; i++) {
+                        chip8->ram[chip8->i+i] = chip8->v[i];
+                    }
+                    break;
+                case 0x65:
+                    for (int i=0; i<=X; i++) {
+                        chip8->v[i] = chip8->ram[chip8->i+i];
+                    }
+                    break;
+            }
     }
     if (pcModified == 0) {
         chip8->pc += 2;
