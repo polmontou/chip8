@@ -14,7 +14,6 @@ typedef struct {
 
 void chip8Init(Chip8 *chip8);
 uint16_t chip8Fetch(Chip8 *chip8);
-uint8_t chip8Decode(uint16_t instruct);
 void jumpToNNN(Chip8 *chip8, uint16_t NNN);
 void setVXtoNN(Chip8 *chip8, uint8_t X, uint8_t NN);
 void increaseVXofNN(Chip8 *chip8, uint8_t X, uint8_t NN);
@@ -72,7 +71,7 @@ void chip8Init(Chip8 *chip8) {
 
 void chip8Cycle(Chip8 *chip8) {
     uint16_t instruct = chip8Fetch(chip8);
-    uint16_t firstNibble = chip8Decode(instruct);
+    uint16_t firstNibble = (instruct & 0xF000) >> 12;
     uint8_t X = 0, Y = 0, NN = 0, N = 0;
     uint16_t NNN = 0;
     short pcModified = 0;
@@ -137,9 +136,80 @@ void chip8Cycle(Chip8 *chip8) {
             NN = (instruct & 0x00FF);
             increaseVXofNN(chip8, X, NN);
             break;
+        case 0x8:
+            X = (instruct & 0x0F00) >> 8;
+            Y = (instruct & 0x00F0) >> 4;
+            N = instruct & 0x000F;
+            switch (N) {
+                case 0x0:
+                    chip8->v[X] = chip8->v[Y];
+                    break;
+                case 0x1:
+                    chip8->v[X] = chip8->v[X] | chip8->v[Y];
+                    break;
+                case 0x2:
+                    chip8->v[X] = chip8->v[X] & chip8->v[Y];
+                    break;
+                case 0x3:
+                    chip8->v[X] = chip8->v[X] ^ chip8->v[Y];
+                    break;
+                case 0x4:
+                    uint16_t total = chip8->v[X] + chip8->v[Y];
+                    if (total > 255) {
+                        chip8->v[0xF] = 1;
+                    } else {
+                        chip8->v[0xF] = 0;
+                    }
+                    chip8->v[X] = chip8->v[Y] + chip8->v[X];
+                case 0x5:
+                    if (chip8->v[X] >= chip8->v[Y]) {
+                        chip8->v[0xF] = 1;
+                    } else {
+                        chip8->v[0xF] = 0;
+                    }
+                    chip8->v[X] = chip8->v[X] - chip8->v[Y];
+                    break;
+                case 0x6:
+                    chip8->v[0xF] = chip8->v[X] & 0x01;
+                    chip8->v[X] = chip8->v[X] >> 1;
+                    break;
+                case 0x7:
+                    if (chip8->v[Y] >= chip8->v[X]) {
+                        chip8->v[0xF] = 1;
+                    } else {
+                        chip8->v[0xF] = 0;
+                    }
+                    chip8->v[X] = chip8->v[Y] - chip8->v[X];
+                    break;
+                case 0x8:
+                    chip8->v[0xF] = chip8->v[X] >> 7;
+                    chip8->v[X] = chip8->v[X] << 1;
+                    break;
+            }
+            break;
+        case 0x9:
+            X = (instruct & 0x0F00) >> 8;
+            Y = (instruct & 0x00F0) >> 4;
+
+            if (chip8->v[X] != chip8->v[Y]) {
+                chip8->pc += 4;
+                pcModified = 1;
+            }
+            break;
         case 0xA:
             NNN = (instruct & 0x0FFF);
             chip8->i = NNN;
+            break;
+        case 0xB:
+            NNN = (instruct & 0x0FFF);
+            chip8->pc = NNN + chip8->v[0];
+            pcModified = 1;
+            break;
+        case 0xC:
+            X = (instruct & 0x0F00) >> 8;
+            NN = instruct & 0x00FF;
+
+            chip8->v[X] = ;
         case 0xD:
             X = (instruct & 0x0F00) >> 8;
             Y = (instruct & 0x00F0) >> 4;
@@ -209,12 +279,6 @@ int chip8LoadRom(Chip8 *chip8, const char *filename) {
 uint16_t chip8Fetch(Chip8 *chip8) {
     uint16_t currentInstruct = (chip8->ram[chip8->pc]<<8) | (chip8->ram[chip8->pc+1]);
     return currentInstruct;
-}
-
-uint8_t chip8Decode(uint16_t instruct) {
-    uint8_t firstNibble = (instruct & 0xF000) >> 12;
-
-    return firstNibble;
 }
 
 

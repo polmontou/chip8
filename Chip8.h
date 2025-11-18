@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 typedef struct {
     uint8_t ram[4096];
     uint8_t v[16];
@@ -10,7 +12,6 @@ typedef struct {
 
 void chip8Init(Chip8 *chip8);
 uint16_t chip8Fetch(Chip8 *chip8);
-uint8_t chip8Decode(uint16_t instruct);
 void jumpToNNN(Chip8 *chip8, uint16_t NNN);
 void setVXtoNN(Chip8 *chip8, uint8_t X, uint8_t NN);
 void increaseVXofNN(Chip8 *chip8, uint8_t X, uint8_t NN);
