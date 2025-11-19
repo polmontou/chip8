@@ -25,8 +25,8 @@ typedef struct {
     SDL_Renderer *renderer;
 } display;
 
-void render_display(Chip8 *chip8, display *display);
+void render_display(display *display, Chip8 *chip8);
 display sdl_init();
-void sdl_close(display *display);
+void sdl_cleanup(display *display);
 
 #endif //CHIP8_RENDER_H

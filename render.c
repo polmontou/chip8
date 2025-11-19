@@ -30,7 +30,7 @@ display sdl_init() {
         exit(EXIT_FAILURE);
     }
 
-    display.window = SDL_CreateWindow("Sinan au pied veineux", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+    display.window = SDL_CreateWindow("FONTSET TEST", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (NULL == display.window) {
         fprintf(stderr, "Erreur SDL_CreateWindow:%s", SDL_GetError());
