@@ -14,15 +14,15 @@ typedef struct {
     uint8_t display[32][64];
 } Chip8;
 
-void chip8Init(Chip8 *chip8);
-uint16_t chip8Fetch(Chip8 *chip8);
-void jumpToNNN(Chip8 *chip8, uint16_t NNN);
-void setVXtoNN(Chip8 *chip8, uint8_t X, uint8_t NN);
-void increaseVXofNN(Chip8 *chip8, uint8_t X, uint8_t NN);
-void chip8Cycle(Chip8 *chip8);
-void return00EE (Chip8 *chip8);
-void callNNN(Chip8 *chip8, uint16_t NNN);
-void drawSprite(Chip8 *chip8, uint8_t vX, uint8_t vY, uint8_t N);
+void chip8_init(Chip8 *chip8);
+uint16_t chip8_fetch(Chip8 *chip8);
+void jump_to_NNN(Chip8 *chip8, uint16_t NNN);
+void set_vX_to_NN(Chip8 *chip8, uint8_t X, uint8_t NN);
+void increase_vX_of_NN(Chip8 *chip8, uint8_t X, uint8_t NN);
+void chip8_cycle(Chip8 *chip8);
+void return_00EE (Chip8 *chip8);
+void call_NNN(Chip8 *chip8, uint16_t NNN);
+void draw_sprite(Chip8 *chip8, uint8_t vX, uint8_t vY, uint8_t N);
 
 const uint8_t CHIP8_FONTSET[80] = {
     // 0
@@ -59,7 +59,7 @@ const uint8_t CHIP8_FONTSET[80] = {
     0xF0, 0x80, 0xE0, 0x80, 0x80
 };
 
-void chip8Init(Chip8 *chip8) {
+void chip8_init(Chip8 *chip8) {
     memset(chip8->ram, 0, sizeof(chip8->ram));
     memset(chip8->v, 0, sizeof(chip8->v));
     chip8->i = 0;
@@ -72,8 +72,8 @@ void chip8Init(Chip8 *chip8) {
 };
 
 
-void chip8Cycle(Chip8 *chip8) {
-    uint16_t instruct = chip8Fetch(chip8);
+void chip8_cycle(Chip8 *chip8) {
+    uint16_t instruct = chip8_fetch(chip8);
     uint16_t firstNibble = (instruct & 0xF000) >> 12;
     uint8_t X = 0, Y = 0, NN = 0, N = 0;
     uint16_t NNN = 0;
@@ -87,19 +87,19 @@ void chip8Cycle(Chip8 *chip8) {
                     memset(chip8->display, 0, sizeof(chip8->display));
                     break;
                 case 0xEE:
-                    return00EE(chip8);
+                    return_00EE(chip8);
                     pcModified = 1;
                     break;
             }
             break;
         case 0x1:
             NNN = (instruct & 0x0FFF);
-            jumpToNNN(chip8, NNN);
+            jump_to_NNN(chip8, NNN);
             pcModified = 1;
             break;
         case 0x2:
             NNN = (instruct & 0x0FFF);
-            callNNN(chip8, NNN);
+            call_NNN(chip8, NNN);
             pcModified = 1;
             break;
         case 0x3:
@@ -132,12 +132,12 @@ void chip8Cycle(Chip8 *chip8) {
         case 0x6:
             X = (instruct & 0x0F00) >> 8;
             NN = (instruct & 0x00FF);
-            setVXtoNN(chip8, X, NN);
+            set_vX_to_NN(chip8, X, NN);
             break;
         case 0x7:
             X = (instruct & 0x0F00) >> 8;
             NN = (instruct & 0x00FF);
-            increaseVXofNN(chip8, X, NN);
+            increase_vX_of_NN(chip8, X, NN);
             break;
         case 0x8:
             X = (instruct & 0x0F00) >> 8;
@@ -220,7 +220,7 @@ void chip8Cycle(Chip8 *chip8) {
             N = instruct & 0x000F;
 
             chip8->v[0xF] = 0;
-            drawSprite(chip8, chip8->v[X], chip8->v[Y], N);
+            draw_sprite(chip8, chip8->v[X], chip8->v[Y], N);
             break;
         case 0xF:
             X = (instruct & 0x0F00) >> 8;
@@ -256,7 +256,7 @@ void chip8Cycle(Chip8 *chip8) {
     }
 }
 
-void drawSprite(Chip8 *chip8, uint8_t vX, uint8_t vY, uint8_t N) {
+void draw_sprite(Chip8 *chip8, uint8_t vX, uint8_t vY, uint8_t N) {
     int currentLine, currentPix;
 
     for (int line = 0; line < N; line++) {
@@ -274,24 +274,24 @@ void drawSprite(Chip8 *chip8, uint8_t vX, uint8_t vY, uint8_t N) {
     }
 }
 
-void return00EE (Chip8 *chip8) {
+void return_00EE (Chip8 *chip8) {
     chip8->sp--;
     chip8->pc = chip8->stack[chip8->sp];
 }
 
-void jumpToNNN(Chip8 *chip8, uint16_t NNN) {
+void jump_to_NNN(Chip8 *chip8, uint16_t NNN) {
     chip8->pc = NNN;
 }
-void callNNN(Chip8 *chip8, uint16_t NNN) {
+void call_NNN(Chip8 *chip8, uint16_t NNN) {
     chip8->stack[chip8->sp] = chip8->pc+2;
     chip8->sp++;
     chip8->pc = NNN;
 }
-void setVXtoNN(Chip8 *chip8, uint8_t X, uint8_t NN) {
+void set_vX_to_NN(Chip8 *chip8, uint8_t X, uint8_t NN) {
     chip8->v[X] = NN;
 }
 
-void increaseVXofNN(Chip8 *chip8, uint8_t X, uint8_t NN) {
+void increase_vX_of_NN(Chip8 *chip8, uint8_t X, uint8_t NN) {
     chip8->v[X] += NN;
 }
 
@@ -308,16 +308,7 @@ int chip8LoadRom(Chip8 *chip8, const char *filename) {
     return 0;
 }
 
-uint16_t chip8Fetch(Chip8 *chip8) {
+uint16_t chip8_fetch(Chip8 *chip8) {
     uint16_t currentInstruct = (chip8->ram[chip8->pc]<<8) | (chip8->ram[chip8->pc+1]);
     return currentInstruct;
 }
-
-
-
-
-
-
-//
-// Created by paul.montoussy@Digital-Grenoble.local on 11/6/25.
-//
