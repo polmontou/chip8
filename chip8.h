@@ -21,5 +21,6 @@ void chip8_cycle(Chip8 *chip8);
 void return_00EE (Chip8 *chip8);
 void call_NNN(Chip8 *chip8, uint16_t NNN);
 void draw_sprite(Chip8 *chip8, uint8_t vX, uint8_t vY, uint8_t N);
+int chip8_load_rom(Chip8 *chip8, const char *filename);
 
 #endif //CHIP8_CHIP8_H

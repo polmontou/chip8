@@ -23,6 +23,8 @@ void chip8_cycle(Chip8 *chip8);
 void return_00EE (Chip8 *chip8);
 void call_NNN(Chip8 *chip8, uint16_t NNN);
 void draw_sprite(Chip8 *chip8, uint8_t vX, uint8_t vY, uint8_t N);
+int chip8_load_rom(Chip8 *chip8, const char *filename);
+
 
 const uint8_t CHIP8_FONTSET[80] = {
     // 0
@@ -295,7 +297,7 @@ void increase_vX_of_NN(Chip8 *chip8, uint8_t X, uint8_t NN) {
     chip8->v[X] += NN;
 }
 
-int chip8LoadRom(Chip8 *chip8, const char *filename) {
+int chip8_load_rom(Chip8 *chip8, const char *filename) {
     FILE *file = fopen(filename, "rb");
 
     if (!file) {
