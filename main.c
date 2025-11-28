@@ -1,6 +1,5 @@
 #include "chip8.h"
 #include "render.h"
-#include <unistd.h>
 
 #define CYCLES_PER_FRAME 10
 
@@ -10,13 +9,23 @@ int main(int argc, char **argv) {
         printf("No ROM file provided\n");
         return 1;
     }
-    //Checks if this file exists
-    if (access(argv[1], F_OK) != 0) {
-        printf("File does not exist\n");
+
+    Chip8 chip8;
+    chip8_init(&chip8);
+
+    if (chip8_load_rom(&chip8, argv[1]) != 0) {
         return 1;
     }
 
+    display ctx = sdl_init();
+    printf("SDL initialized");
 
+    short running = 1;
+    while (running) {
+
+    }
+
+    return 0;
 }
 
 // int main(void) {
