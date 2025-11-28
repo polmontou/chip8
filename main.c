@@ -22,6 +22,19 @@ int main(int argc, char **argv) {
 
     short running = 1;
     while (running) {
+        uint64_t start_timestamp = SDL_GetTicks();
+
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                running = 0;
+            }
+        }
+
+        for (int i = 0; i < CYCLES_PER_FRAME; i++) {
+            chip8_cycle(&chip8);
+        }
+
 
     }
 
